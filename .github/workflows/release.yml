@@ -45,79 +45,21 @@ jobs:
           sudo apt update
           sudo apt install libssl-dev libgtk-3-dev libglib2.0-dev
 
-      - name: Build binary "${{ matrix.target }}"
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --verbose --target=${{ matrix.target }}
+      - name: Install cargo-packager
+        run: cargo install cargo-packager --locked
 
-      - name: Test binary "${{ matrix.target }}"
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --verbose --target=${{ matrix.target }}
-
-      - name: Rename binary file
-        shell: bash
-        run: |
-          origin="$(find target/${{ matrix.target }}/release -maxdepth 1 -perm -111 -iname "${{ env.PROJECT_NAME }}*")"
-          dest="${origin/${{ env.PROJECT_NAME}}/${{ env.PROJECT_NAME}}-${{ matrix.target}}}"
-          mv "$origin" "$dest"
+      - name: Build and package "${{ matrix.target }}"
+        run: cargo packager --release --verbose --target ${{ matrix.target }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: ./target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }}-${{ matrix.target }}*
-
-  build_appimage:
-    name: Build AppImage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install latest rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          default: true
-          override: true
-
-      - name: Install packages
-        run: |
-          sudo apt update
-          sudo apt install zsync
-          sudo apt install libssl-dev libgtk-3-dev libglib2.0-dev
-          cargo install --git https://github.com/StratusFearMe21/cargo-appimage.git
-
-      - name: Install appimagetool
-        run: |
-          wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
-          chmod a+x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage --appimage-extract
-          chmod 755 squashfs-root/usr/bin/*
-          sudo mv squashfs-root/usr/bin/* /usr/bin
-          sudo mv squashfs-root/usr/lib/appimagekit /usr/lib/appimagekit
-          sudo chmod 755 /usr/lib/appimagekit/mksquashfs
-          rm -rf squashfs-root/
-          rm appimagetool-x86_64.AppImage
-
-      - name: Build binary
-        uses: actions-rs/cargo@v1
-        with:
-          command: appimage
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          path: |
-            ${{ env.PROJECT_NAME }}*.AppImage
-            ${{ env.PROJECT_NAME }}*.zsync
+          path: ./target/release/${{ env.PROJECT_NAME }}*
 
   release_and_publish:
     name: Create release and publish
-    needs: [build, build_appimage]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Get the release version from the tag

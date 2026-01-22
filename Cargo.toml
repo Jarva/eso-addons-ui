@@ -22,13 +22,11 @@ members = [".", "core", "entity", "migration"]
 name = "eso-addon-manager"
 path = "src/main.rs"
 
-[package.metadata.appimage]
-auto_link = true
-auto_link_exclude_list = ["libc.so*", "libdl.so*", "libpthread.so*"]
-args = [
-    "-u",
-    "gh-releases-zsync|arviceblot|eso-addons|latest|eso-addon-manager-*x86_64.AppImage.zsync",
-]
+[package.metadata.packager]
+before-packaging-command = "cargo build --release"
+product-name = "ESO Addon Manager"
+identifier = "com.arviceblot.eso-addon-manager"
+icons = ["./data/icon.svg", "./data/icon.png"]
 
 [dependencies]
 eframe = "0.32.0"
