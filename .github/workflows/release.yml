@@ -17,14 +17,17 @@ jobs:
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            formats: appimage,deb
 
           - build: macos
             os: macos-latest
             target: aarch64-apple-darwin
+            formats: dmg
 
           - build: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
+            formats: msi
       fail-fast: false
     steps:
       - name: Checkout code
@@ -50,10 +53,18 @@ jobs:
         run: cargo packager --release --target=${{ matrix.target }} --formats ${{ matrix.formats }} 
 
       - name: Copy Executables
-        if: matrix.build != 'windows'
         run: |
+          TARGET="${{ matrix.target }}"
+          PKG="${{ env.PROJECT_NAME }}"
+
           VERSION="$(cargo metadata --format-version=1 --no-deps | jq -r --arg PKG "$PKG" '.packages[] | select(.name==$PKG) | .version')"
-          cp ./target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }} build/${{ env.PROJECT_NAME }}_${VERSION}_${{ matrix.target }}
+
+          EXT=""
+          case "$TARGET" in
+            *-pc-windows-*) EXT=".exe" ;;
+          esac
+
+          cp ./target/${TARGET}/release/${PKG}${EXT} build/${PKG}_${VERSION}_${TARGET}
 
       - name: Upload Packages
         uses: actions/upload-artifact@v4
