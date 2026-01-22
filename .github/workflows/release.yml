@@ -16,12 +16,15 @@ jobs:
         include:
           - build: linux
             os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
 
           - build: macos
             os: macos-latest
+            target: aarch64-apple-darwin
 
           - build: windows
             os: windows-latest
+            target: x86_64-pc-windows-msvc
       fail-fast: false
     steps:
       - name: Checkout code
@@ -40,14 +43,23 @@ jobs:
       - name: Install cargo-packager
         run: cargo binstall cargo-packager --no-confirm
 
-      - name: Build and package
-        run: cargo packager --release --verbose
+      - name: Build
+        run: cargo build --release --target=${{ matrix.target }}
 
-      - name: Upload Artifact
+      - name: Package
+        run: cargo packager --release --target=${{ matrix.target }} --formats ${{ matrix.formats }} 
+
+      - name: Copy Executables
+        if: matrix.build != 'windows'
+        run: |
+          VERSION="$(cargo metadata --format-version=1 --no-deps | jq -r --arg PKG "$PKG" '.packages[] | select(.name==$PKG) | .version')"
+          cp ./target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }} build/${{ env.PROJECT_NAME }}_${VERSION}_${{ matrix.target }}
+
+      - name: Upload Packages
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build }}
-          path: ./target/release/${{ env.PROJECT_NAME }}*
+          path: ./build/${{ env.PROJECT_NAME }}_*
 
   release_and_publish:
     name: Create release and publish
