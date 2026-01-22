@@ -26,7 +26,7 @@ path = "src/main.rs"
 before-packaging-command = "cargo build --release"
 product-name = "ESO Addon Manager"
 identifier = "com.arviceblot.eso-addon-manager"
-icons = ["./data/icon.svg", "./data/icon.png"]
+icons = ["./data/icon.png"]
 
 [dependencies]
 eframe = "0.32.0"
