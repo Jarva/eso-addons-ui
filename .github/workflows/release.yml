@@ -27,7 +27,7 @@ jobs:
           - build: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            formats: msi
+            formats: wix
       fail-fast: false
     steps:
       - name: Checkout code
