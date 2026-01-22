@@ -22,7 +22,7 @@ jobs:
           - build: macos
             os: macos-latest
             target: aarch64-apple-darwin
-            formats: dmg
+            formats: app
 
           - build: windows
             os: windows-latest
